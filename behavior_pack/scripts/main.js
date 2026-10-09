@@ -7,24 +7,11 @@ const CHAKRA_REGEN_PER_INTERVAL = 2;
 const REGEN_INTERVAL_TICKS = 20;
 
 function getOrCreateObjective(id, displayName) {
-  let objective = world.scoreboard.getObjective(id);
-  if (!objective) {
-    objective = world.scoreboard.addObjective(id, displayName);
-  }
-  return objective;
+  return world.scoreboard.getObjective(id) ??
+    world.scoreboard.addObjective(id, displayName);
 }
 
-function setScoreIfMissing(objective, player, value) {
-  const identity = player.scoreboardIdentity;
-  if (!identity) return;
-  try {
-    objective.getScore(identity);
-  } catch {
-    objective.setScore(identity, value);
-  }
-}
-
-function getScore(objective, player, fallback = 0) {
+function scoreFor(objective, player, fallback = 0) {
   const identity = player.scoreboardIdentity;
   if (!identity) return fallback;
   try {
@@ -37,12 +24,21 @@ function getScore(objective, player, fallback = 0) {
 function setupPlayer(player) {
   const chakra = getOrCreateObjective(CHAKRA_OBJECTIVE, "Chakra");
   const xp = getOrCreateObjective(XP_OBJECTIVE, "Ninja XP");
-  setScoreIfMissing(chakra, player, MAX_CHAKRA);
-  setScoreIfMissing(xp, player, 0);
+  const identity = player.scoreboardIdentity;
+  if (!identity) return;
+
+  try { chakra.getScore(identity); }
+  catch { chakra.setScore(identity, MAX_CHAKRA); }
+
+  try { xp.getScore(identity); }
+  catch { xp.setScore(identity, 0); }
 }
 
 world.afterEvents.playerSpawn.subscribe(({ player }) => {
-  system.run(() => setupPlayer(player));
+  system.run(() => {
+    try { setupPlayer(player); }
+    catch (error) { console.warn(`[Naruto Addon] Player setup failed: ${error}`); }
+  });
 });
 
 system.runInterval(() => {
@@ -52,19 +48,18 @@ system.runInterval(() => {
     chakraObjective = getOrCreateObjective(CHAKRA_OBJECTIVE, "Chakra");
     xpObjective = getOrCreateObjective(XP_OBJECTIVE, "Ninja XP");
   } catch (error) {
-    console.warn(`[Naruto Addon] Could not initialize scoreboard: ${error}`);
+    console.warn(`[Naruto Addon] Scoreboard setup failed: ${error}`);
     return;
   }
 
   for (const player of world.getPlayers()) {
     const identity = player.scoreboardIdentity;
     if (!identity) continue;
-
-    const current = getScore(chakraObjective, player, MAX_CHAKRA);
-    const chakra = Math.min(MAX_CHAKRA, current + CHAKRA_REGEN_PER_INTERVAL);
     try {
+      const current = scoreFor(chakraObjective, player, MAX_CHAKRA);
+      const chakra = Math.min(MAX_CHAKRA, current + CHAKRA_REGEN_PER_INTERVAL);
       chakraObjective.setScore(identity, chakra);
-      const xp = getScore(xpObjective, player, 0);
+      const xp = scoreFor(xpObjective, player, 0);
       const level = Math.floor(xp / 100) + 1;
       player.onScreenDisplay.setActionBar(
         `§bChakra: §f${chakra}/${MAX_CHAKRA}   §eNinja Lv. ${level} §7(XP: ${xp})`
@@ -75,4 +70,4 @@ system.runInterval(() => {
   }
 }, REGEN_INTERVAL_TICKS);
 
-console.warn("[Naruto Addon] Chakra and ninja progression foundation loaded.");
+console.warn("[Naruto Addon] Chakra foundation loaded.");
