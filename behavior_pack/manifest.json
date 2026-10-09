@@ -1,0 +1,54 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Naruto Bedrock - Behavior Pack",
+    "description": "Core gameplay systems for the Naruto Bedrock addon.",
+    "uuid": "9c4b5e72-4b87-4e61-a1b2-6d5e0f7c9201",
+    "version": [
+      0,
+      1,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      0
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "b0d2a8c1-6f34-4d91-8a27-3e5c7b9f1024",
+      "version": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "d6a7c2f9-1b53-4e80-9d14-7f2a6c8e3051",
+      "version": [
+        0,
+        1,
+        0
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "1.13.0"
+    },
+    {
+      "uuid": "a64d9b30-51f2-4e87-8c26-3d70b19e5a43",
+      "version": [
+        0,
+        1,
+        0
+      ]
+    }
+  ]
+}
