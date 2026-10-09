@@ -1,73 +1,59 @@
 import { world, system } from "@minecraft/server";
 
+const TAG = "[Naruto Test v0.1.3]";
 const CHAKRA_OBJECTIVE = "chakra";
 const XP_OBJECTIVE = "ninja_xp";
 const MAX_CHAKRA = 100;
-const CHAKRA_REGEN_PER_INTERVAL = 2;
-const REGEN_INTERVAL_TICKS = 20;
+const REGEN_PER_SECOND = 2;
 
-function getOrCreateObjective(id, displayName) {
-  return world.scoreboard.getObjective(id) ??
-    world.scoreboard.addObjective(id, displayName);
+function objective(id, name) {
+  let obj = world.scoreboard.getObjective(id);
+  if (!obj) obj = world.scoreboard.addObjective(id, name);
+  return obj;
 }
 
-function scoreFor(objective, player, fallback = 0) {
-  const identity = player.scoreboardIdentity;
-  if (!identity) return fallback;
+function ensurePlayer(player) {
   try {
-    return objective.getScore(identity);
+    const chakra = objective(CHAKRA_OBJECTIVE, "Chakra");
+    const xp = objective(XP_OBJECTIVE, "Ninja XP");
+    chakra.setScore(player, safeScore(chakra, player, MAX_CHAKRA));
+    xp.setScore(player, safeScore(xp, player, 0));
+    player.sendMessage("§b[Naruto Test] Script loaded. Chakra system initialized.");
+  } catch (error) {
+    console.warn(`${TAG} Player initialization error: ${error}`);
+    try { player.sendMessage("§c[Naruto Test] Initialization failed. Check Content Log."); } catch {}
+  }
+}
+
+function safeScore(obj, player, fallback) {
+  try {
+    const score = obj.getScore(player);
+    return typeof score === "number" ? score : fallback;
   } catch {
     return fallback;
   }
 }
 
-function setupPlayer(player) {
-  const chakra = getOrCreateObjective(CHAKRA_OBJECTIVE, "Chakra");
-  const xp = getOrCreateObjective(XP_OBJECTIVE, "Ninja XP");
-  const identity = player.scoreboardIdentity;
-  if (!identity) return;
+console.warn(`${TAG} SCRIPT ENTRY RAN`);
+world.sendMessage("§a[Naruto Test] Script is running.");
 
-  try { chakra.getScore(identity); }
-  catch { chakra.setScore(identity, MAX_CHAKRA); }
-
-  try { xp.getScore(identity); }
-  catch { xp.setScore(identity, 0); }
-}
-
-world.afterEvents.playerSpawn.subscribe(({ player }) => {
-  system.run(() => {
-    try { setupPlayer(player); }
-    catch (error) { console.warn(`[Naruto Addon] Player setup failed: ${error}`); }
-  });
+world.afterEvents.playerSpawn.subscribe((event) => {
+  system.run(() => ensurePlayer(event.player));
 });
 
 system.runInterval(() => {
-  let chakraObjective;
-  let xpObjective;
   try {
-    chakraObjective = getOrCreateObjective(CHAKRA_OBJECTIVE, "Chakra");
-    xpObjective = getOrCreateObjective(XP_OBJECTIVE, "Ninja XP");
-  } catch (error) {
-    console.warn(`[Naruto Addon] Scoreboard setup failed: ${error}`);
-    return;
-  }
-
-  for (const player of world.getPlayers()) {
-    const identity = player.scoreboardIdentity;
-    if (!identity) continue;
-    try {
-      const current = scoreFor(chakraObjective, player, MAX_CHAKRA);
-      const chakra = Math.min(MAX_CHAKRA, current + CHAKRA_REGEN_PER_INTERVAL);
-      chakraObjective.setScore(identity, chakra);
-      const xp = scoreFor(xpObjective, player, 0);
-      const level = Math.floor(xp / 100) + 1;
-      player.onScreenDisplay.setActionBar(
-        `§bChakra: §f${chakra}/${MAX_CHAKRA}   §eNinja Lv. ${level} §7(XP: ${xp})`
-      );
-    } catch (error) {
-      console.warn(`[Naruto Addon] Player update failed: ${error}`);
+    const chakra = objective(CHAKRA_OBJECTIVE, "Chakra");
+    const xp = objective(XP_OBJECTIVE, "Ninja XP");
+    for (const player of world.getPlayers()) {
+      const current = safeScore(chakra, player, MAX_CHAKRA);
+      const next = Math.min(MAX_CHAKRA, current + REGEN_PER_SECOND);
+      chakra.setScore(player, next);
+      const points = safeScore(xp, player, 0);
+      const level = Math.floor(points / 100) + 1;
+      player.onScreenDisplay.setActionBar(`§bChakra: §f${next}/${MAX_CHAKRA}   §eNinja Lv. ${level} §7(XP: ${points})`);
     }
+  } catch (error) {
+    console.warn(`${TAG} Tick error: ${error}`);
   }
-}, REGEN_INTERVAL_TICKS);
-
-console.warn("[Naruto Addon] Chakra foundation loaded.");
+}, 20);
