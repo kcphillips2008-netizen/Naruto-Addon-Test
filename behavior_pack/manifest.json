@@ -7,11 +7,11 @@
     "version": [
       0,
       1,
-      0
+      1
     ],
     "min_engine_version": [
       1,
-      21,
+      26,
       0
     ]
   },
@@ -22,7 +22,7 @@
       "version": [
         0,
         1,
-        0
+        1
       ]
     },
     {
@@ -32,7 +32,7 @@
       "version": [
         0,
         1,
-        0
+        1
       ],
       "entry": "scripts/main.js"
     }
@@ -40,14 +40,14 @@
   "dependencies": [
     {
       "module_name": "@minecraft/server",
-      "version": "1.13.0"
+      "version": "2.7.0"
     },
     {
       "uuid": "a64d9b30-51f2-4e87-8c26-3d70b19e5a43",
       "version": [
         0,
         1,
-        0
+        1
       ]
     }
   ]
