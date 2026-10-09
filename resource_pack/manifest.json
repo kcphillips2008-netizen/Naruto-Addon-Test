@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Naruto Bedrock - Resource Pack",
+    "description": "Resources for the Naruto Bedrock addon.",
+    "uuid": "a64d9b30-51f2-4e87-8c26-3d70b19e5a43",
+    "version": [
+      0,
+      1,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      0
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "c285f1a9-6d37-4b02-9e81-5a43d7c0b916",
+      "version": [
+        0,
+        1,
+        0
+      ]
+    }
+  ]
+}
